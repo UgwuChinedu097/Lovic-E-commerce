@@ -10,6 +10,7 @@ import {
 } from "../service/ProductApi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Footer from "../static/Footer";
 
 const CategoryPage = () => {
   const { categoryName } = useParams();
@@ -75,7 +76,7 @@ const CategoryPage = () => {
     <>
       <Header />
       <section className="py-16 bg-neutral-100">
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10">
             <div>
               <h2 className="text-[30px] font-bold text-black capitalize">
@@ -102,7 +103,7 @@ const CategoryPage = () => {
               </select>
 
               <button
-                className="text-amber-600 underline hover:opacity-80 whitespace-nowrap"
+                className={`px-4 py-2 rounded-md text-sm font-medium border transition-all duration-300 ${viewAll ? "bg-amber-600 text-white border-transparent" : "bg-white text-amber-600 border-amber-600 hover:bg-amber-50"}`}
                 onClick={() => setViewAll((prev) => !prev)}
               >
                 {viewAll ? "View by Category" : "View All Products"}
@@ -178,6 +179,7 @@ const CategoryPage = () => {
         </div>
       </section>
       <ToastContainer />
+      <Footer/>
     </>
   );
 };

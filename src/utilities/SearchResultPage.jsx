@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import CTAButton from "../ui/CTAButton";
 import Header from "../static/Header";
 import { useGetAllProductsQuery } from "../service/ProductApi";
+import Footer from "../static/Footer";
 
 const SearchResultsPage = () => {
   const { keyword } = useParams();
@@ -76,9 +77,6 @@ const SearchResultsPage = () => {
                       <h2 className="text-lg font-semibold text-gray-800">
                         {product.name}
                       </h2>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {product.description}
-                      </p>
                     </div>
                   </div>
 
@@ -106,6 +104,7 @@ const SearchResultsPage = () => {
           </div>
         </div>
       </section>
+      <Footer/>
     </>
   );
 };

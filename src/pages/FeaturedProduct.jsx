@@ -124,7 +124,7 @@ const ProductCard = () => {
         </div>
 
         {/* 🔽 View More Button */}
-        {data.allProduct.length > 8 && (
+        {data.allProduct.length > 10 && (
           <div className="text-center mt-12">
             <CTAButton
               text="View More Products"
