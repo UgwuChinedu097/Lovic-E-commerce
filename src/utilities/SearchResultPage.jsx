@@ -1,14 +1,22 @@
 import React, { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import CTAButton from "../ui/CTAButton";
+import { useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { toast, ToastContainer } from "react-toastify";
+import { FiShoppingCart } from "react-icons/fi";
+import "react-toastify/dist/ReactToastify.css";
+
 import Header from "../static/Header";
-import { useGetAllProductsQuery } from "../service/ProductApi";
 import Footer from "../static/Footer";
+import CTAButton from "../ui/CTAButton";
+import { useGetAllProductsQuery } from "../service/ProductApi";
+import { useAddToCartMutation } from "../service/CartApi";
 
 const SearchResultsPage = () => {
   const { keyword } = useParams();
   const navigate = useNavigate();
+  const token = useSelector((state) => state.user.token);
   const { data, isLoading, isError } = useGetAllProductsQuery();
+  const [addToCart] = useAddToCartMutation();
 
   const filteredProducts = useMemo(() => {
     if (!data?.allProduct || !keyword) return [];
@@ -17,6 +25,21 @@ const SearchResultsPage = () => {
       prod?.name?.toLowerCase().includes(term)
     );
   }, [data, keyword]);
+
+  const handleAddToCart = async (product) => {
+    if (!token) {
+      toast.error("Please sign in to add to cart");
+      return;
+    }
+
+    try {
+      await addToCart({ productId: product._id, qty: 1 }).unwrap();
+      toast.success(`${product.name} added to cart!`);
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      toast.error("Failed to add to cart");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -41,8 +64,9 @@ const SearchResultsPage = () => {
   return (
     <>
       <Header />
+      <ToastContainer />
       <section className="py-16 bg-neutral-100">
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto max-w-[1500px]">
           <h2 className="text-[30px] font-bold text-black text-center capitalize">
             Search Results for “{decodeURIComponent(keyword)}”
           </h2>
@@ -51,8 +75,9 @@ const SearchResultsPage = () => {
             {filteredProducts.length !== 1 ? "s" : ""} found
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-lg:gap-6 max-md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 sm:gap-6">
             {filteredProducts.map((product) => {
+              const isOutOfStock = product.stock <= 0;
               const productImage = Array.isArray(product.image)
                 ? product.image[0]
                 : typeof product.image === "string"
@@ -62,34 +87,58 @@ const SearchResultsPage = () => {
               return (
                 <div
                   key={product._id}
-                  className="relative bg-white shadow-md rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                  className="relative bg-white shadow-md rounded-2xl overflow-hidden w-full hover:shadow-lg transition-shadow duration-300"
+                  onClick={() => navigate(`/productdetails/${product._id}`)}
                 >
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => navigate(`/productdetails/${product._id}`)}
-                  >
-                    <img
-                      src={productImage}
-                      alt={product.name}
-                      className="w-full h-56 object-cover"
-                    />
-                    <div className="p-4 space-y-2">
-                      <h2 className="text-lg font-semibold text-gray-800">
-                        {product.name}
-                      </h2>
+                  {isOutOfStock && (
+                    <div className="absolute top-3 -left-3 bg-red-600 text-white text-xs font-semibold px-3 py-1 rounded-r-xl shadow-md z-10">
+                      Out of Stock
                     </div>
-                  </div>
+                  )}
 
-                  <div className="p-4 mt-auto">
-                    <div className="flex items-center justify-between">
+                  <img
+                    src={productImage}
+                    alt={product.name}
+                    className="w-full h-56 object-cover"
+                  />
+
+                  <div className="p-4 space-y-2">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      {product.name}
+                    </h2>
+                    <p className="text-sm text-gray-600 line-clamp-1 truncate">
+                      {product.description}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-3">
                       <span className="text-base font-bold text-black">
                         ₦{product.price}
                       </span>
-                      <CTAButton
-                        className="bg-black text-white px-4 py-1 rounded-full text-sm"
-                        text="View Details"
-                        onClick={() => navigate(`/product/${product._id}`)}
-                      />
+
+                      <div
+                        className={`relative group ${
+                          isOutOfStock ? "cursor-not-allowed" : ""
+                        }`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <CTAButton
+                          className={`px-4 py-1 rounded-full text-sm flex items-center gap-2 ${
+                            isOutOfStock
+                              ? "bg-gray-300 text-gray-500"
+                              : "bg-amber-600 text-white"
+                          }`}
+                          text={<FiShoppingCart className="text-base" />}
+                          onClick={() =>
+                            !isOutOfStock && handleAddToCart(product)
+                          }
+                          disabled={isOutOfStock}
+                        />
+                        {isOutOfStock && (
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max bg-black text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            Out of stock
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -104,7 +153,7 @@ const SearchResultsPage = () => {
           </div>
         </div>
       </section>
-      <Footer/>
+      <Footer />
     </>
   );
 };

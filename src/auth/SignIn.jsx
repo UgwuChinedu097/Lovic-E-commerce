@@ -6,10 +6,9 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useDispatch } from "react-redux";
-import { setUser } from "../service/UserSlice"; // Adjust path if needed
-import { useLoginUserMutation } from "../service/UserApi"; // Adjust path if needed
+import { setUser } from "../service/UserSlice"; 
+import { useLoginUserMutation } from "../service/UserApi"; 
 
-// Spinner component
 const Spinner = () => (
   <svg
     className="animate-spin h-4 w-4 text-white"
@@ -33,7 +32,7 @@ const Spinner = () => (
   </svg>
 );
 
-// Yup validation schema
+
 const schema = yup.object().shape({
   email: yup.string().email("Invalid email").required("Email is required"),
   password: yup.string().required("Password is required"),

@@ -1,137 +1,155 @@
-import React from 'react';
-import { useGetAllOrdersQuery } from '../service/CartApi';
-import { useGetAllProductsQuery } from '../service/ProductApi';
-import { useGetAllUsersQuery } from '../service/UserApi';
-import { ShoppingBag, DollarSign, Box, Users } from 'lucide-react';
+import React from "react";
+import { useGetAllOrdersQuery } from "../service/CartApi";
+import { useGetAllProductsQuery } from "../service/ProductApi";
+import { useGetAllUsersQuery } from "../service/UserApi";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
+} from "recharts";
+import { Users, ShoppingBag, DollarSign, Box } from "lucide-react";
 
 const AdminDashboard = () => {
-  const { data: ordersData, isLoading: loadingOrders, isError: errorOrders } = useGetAllOrdersQuery();
-  const { data: productsData, isLoading: loadingProducts, isError: errorProducts } = useGetAllProductsQuery();
-  const { data: usersData, isLoading: loadingUsers, isError: errorUsers } = useGetAllUsersQuery();
+  const { data: ordersData } = useGetAllOrdersQuery();
+  const { data: productsData } = useGetAllProductsQuery();
+  const { data: usersData } = useGetAllUsersQuery();
 
-  const orders = Array.isArray(ordersData?.orders) ? ordersData.orders : [];
-  const products = Array.isArray(productsData?.products) ? productsData.products : [];
-  const users = Array.isArray(usersData?.users) ? usersData.users : [];
+  const orders = ordersData?.allOrder || [];
+  const products = productsData?.allProduct || [];
+  const users = usersData?.allUser || [];
 
   const totalSales = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-  const lowStock = products.filter((product) => product.stock <= 3);
+  const thisMonth = new Date().getMonth();
+  const recentUsers = [...users].slice(-5).reverse();
 
-  const cards = [
-    { title: 'Total Orders', value: orders.length, icon: <ShoppingBag className="w-5 h-5" /> },
-    { title: 'Total Sales', value: `₦${totalSales.toLocaleString()}`, icon: <DollarSign className="w-5 h-5" /> },
-    { title: 'Products', value: products.length, icon: <Box className="w-5 h-5" /> },
-    { title: 'Customers', value: users.length, icon: <Users className="w-5 h-5" /> },
+  const monthlySales = Array.from({ length: 6 }, (_, i) => {
+    const targetMonth = (thisMonth - i + 12) % 12;
+    const monthName = new Date(0, targetMonth).toLocaleString("default", { month: "short" });
+    const monthOrders = orders.filter(
+      (order) => new Date(order.createdAt).getMonth() === targetMonth
+    );
+    const monthTotal = monthOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+    return { name: monthName, sales: monthTotal };
+  }).reverse();
+
+  const stockChart = [
+    { name: "Out of Stock", count: products.filter(p => p.stock === 0).length },
+    { name: "Low Stock", count: products.filter(p => p.stock > 0 && p.stock <= 3).length },
+    { name: "In Stock", count: products.filter(p => p.stock > 3).length },
   ];
 
+  const stats = [
+    {
+      title: "Total Orders",
+      value: orders.length,
+      icon: <ShoppingBag className="w-5 h-5" />,
+      color: "text-amber-600 bg-amber-100",
+    },
+    {
+      title: "Total Sales",
+      value: `₦${totalSales.toLocaleString()}`,
+      icon: <DollarSign className="w-5 h-5" />,
+      color: "text-green-600 bg-green-100",
+    },
+    {
+      title: "Products",
+      value: products.length,
+      icon: <Box className="w-5 h-5" />,
+      color: "text-blue-600 bg-blue-100",
+    },
+    {
+      title: "Customers",
+      value: users.length,
+      icon: <Users className="w-5 h-5" />,
+      color: "text-black bg-gray-100",
+    },
+  ];
+
+
   return (
-    <div className="p-4 md:p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="max-w-7xl mx-auto space-y-10">
+      <div>
+        <h1 className="text-2xl font-bold text-black">Welcome, Admin</h1>
+        <p className="text-sm text-gray-500">Here’s your overview for today</p>
+      </div>
 
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {cards.map((card, i) => (
-          <div
-            key={i}
-            className="bg-white shadow-sm rounded-2xl p-5 flex items-center justify-between hover:shadow-md transition"
-          >
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {stats.map((s, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm p-5 flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-500">{card.title}</p>
-              <h2 className="text-2xl font-bold text-black mt-1">{card.value}</h2>
+              <p className="text-sm text-gray-500">{s.title}</p>
+              <h2 className="text-2xl font-bold text-black mt-1">{s.value}</h2>
             </div>
-            <div className="p-2 bg-amber-100 text-amber-600 rounded-full">{card.icon}</div>
+            <div className={`p-3 rounded-full ${s.color}`}>{s.icon}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white shadow-sm rounded-2xl p-6 overflow-auto">
-        <h3 className="text-lg font-semibold text-black mb-4">Recent Orders</h3>
-        {loadingOrders ? (
-          <p className="text-sm text-gray-500">Loading orders...</p>
-        ) : errorOrders ? (
-          <p className="text-sm text-red-500">Failed to load orders.</p>
-        ) : orders.length === 0 ? (
-          <p className="text-sm text-gray-500">No orders found.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="text-gray-600">
-              <tr className="border-b">
-                <th className="py-3 text-left">Customer</th>
-                <th className="text-left">Products</th>
-                <th>Qty</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th className="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.slice(0, 5).map((order) => (
-                <tr key={order._id} className="border-b last:border-none hover:bg-gray-50">
-                  <td className="py-3">{order?.user?.name || 'Unknown'}</td>
-                  <td>
-                    {(order.products || [])
-                      .map((p) => p.name || 'Product')
-                      .slice(0, 2)
-                      .join(', ')}
-                  </td>
-                  <td className="text-center">{order.products?.length || 0}</td>
-                  <td className="text-center">
-                    <span
-                      className={`px-3 py-1 text-xs rounded-full font-medium ${
-                        order.status === 'Pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-green-100 text-green-700'
-                      }`}
-                    >
-                      {order.status || 'Pending'}
-                    </span>
-                  </td>
-                  <td className="text-center">
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="text-right">
-                    <button className="text-amber-600 font-medium hover:underline">View</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <div className="text-right mt-4">
-          <button className="text-sm text-amber-600 font-semibold hover:underline">
-            See All Orders
-          </button>
+      
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-semibold text-black mb-4">Sales (Last 6 Months)</h3>
+          <div className="w-full h-[220px] md:h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlySales}>
+                <CartesianGrid stroke="#f0f0f0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="sales" stroke="#f59e0b" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-semibold text-black mb-4">Product Stock Overview</h3>
+          <div className="w-full h-[220px] md:h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stockChart}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#f59e0b" barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-black mb-2">Low Stock Alerts</h3>
-        {loadingProducts ? (
-          <p className="text-sm text-gray-500">Checking stock...</p>
-        ) : errorProducts ? (
-          <p className="text-sm text-red-500">Failed to load products.</p>
-        ) : lowStock.length > 0 ? (
-          <ul className="list-disc list-inside text-sm text-red-600">
-            {lowStock.map((item) => (
-              <li key={item._id}>
-                {item.name} ({item.stock} left)
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-green-600">All products have enough stock.</p>
-        )}
+      <div className="bg-white rounded-xl shadow p-6">
+        <h3 className="text-lg font-semibold text-black mb-4">Top Recent Users</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {recentUsers.map((u) => (
+            <div
+              key={u._id}
+              className="flex items-center gap-4 bg-neutral-50 rounded-lg p-4 hover:shadow transition"
+            >
+              {/* Avatar Initial */}
+              <div className="w-10 h-10 rounded-full bg-amber-600 text-white flex items-center justify-center text-sm font-bold uppercase">
+                {u.firstName?.[0] || u.name?.[0] || "U"}
+              </div>
+              {/* Details */}
+              <div>
+                <p className="text-sm font-semibold text-black">
+                  {u.firstName || u.name || "N/A"}
+                </p>
+                <p className="text-xs text-gray-500">{u.email || "No email"}</p>
+                <span
+                  className={`mt-1 inline-block text-xs px-2 py-1 rounded-full font-medium ${u.role === "admin"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-700"
+                    }`}
+                >
+                  {u.role}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-4">
-        <button className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-xl text-sm">
-          ➕ Add Product
-        </button>
-        <button className="bg-black hover:bg-gray-900 text-white py-2 px-4 rounded-xl text-sm">
-          📦 View All Products
-        </button>
-        <button className="bg-white border border-gray-300 hover:bg-gray-100 text-black py-2 px-4 rounded-xl text-sm">
-          ⚙️ Settings
-        </button>
-      </div>
     </div>
   );
 };

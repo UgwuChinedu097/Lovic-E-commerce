@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useGetAllOrdersQuery } from "../service/CartApi";
-import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { clearNotifications } from "../service/NotificationSlice";
 
@@ -13,27 +12,20 @@ const AdminOrderPage = () => {
   const dispatch = useDispatch();
 
   const orders = data?.allOrder || [];
+
   useEffect(() => {
     dispatch(clearNotifications());
   }, [dispatch]);
 
   useEffect(() => {
     const currentIds = orders.map((o) => o._id);
-    const prevIds = prevOrderIdsRef.current;
-    const newOrders = currentIds.filter((id) => !prevIds.includes(id));
-
-    if (newOrders.length > 0) {
-      toast.success("🛒 New order received!", { position: "top-right" });
-    }
 
     prevOrderIdsRef.current = currentIds;
   }, [orders]);
 
-
-  let filteredOrders = selectedDate
-    ? orders.filter(
-        (order) =>
-          new Date(order.createdAt).toISOString().slice(0, 10) === selectedDate
+  const filteredOrders = selectedDate
+    ? orders.filter((order) =>
+        new Date(order.createdAt).toISOString().slice(0, 10) === selectedDate
       )
     : [...orders];
 
@@ -65,19 +57,20 @@ const AdminOrderPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+      {/* Header & Filters */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-black">All Customer Orders</h1>
-        <div className="flex gap-3 items-center flex-wrap">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
           <input
             type="date"
-            className="border border-gray-300 px-3 py-2 rounded-md shadow-sm text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-600"
+            className="w-full sm:w-auto border border-gray-300 px-3 py-2 rounded-md shadow-sm text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-amber-600"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
           />
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
-            className="border border-gray-300 px-3 py-2 rounded-md shadow-sm text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-600"
+            className="w-full sm:w-auto border border-gray-300 px-3 py-2 rounded-md shadow-sm text-sm text-black bg-white focus:outline-none focus:ring-2 focus:ring-amber-600"
           >
             <option value="desc">Newest First</option>
             <option value="asc">Oldest First</option>
@@ -85,6 +78,7 @@ const AdminOrderPage = () => {
         </div>
       </div>
 
+      {/* No Orders */}
       {filteredOrders.length === 0 ? (
         <div className="text-center py-20">
           <img
@@ -92,7 +86,7 @@ const AdminOrderPage = () => {
             alt="No orders"
             className="w-32 h-32 mx-auto mb-4 opacity-60"
           />
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">
+          <h2 className="text-xl font-semibold text-black mb-2">
             No orders found
           </h2>
           <p className="text-gray-500 text-sm">
@@ -103,28 +97,29 @@ const AdminOrderPage = () => {
         filteredOrders.map((order, index) => {
           const isOpen = openOrderIds.includes(order._id);
           const firstProduct = order.items[0]?.product;
-          const previewImage = firstProduct?.images?.[0] || firstProduct?.image;
+          const previewImage = firstProduct?.image?.[0] || firstProduct?.image;
 
           return (
             <div
               key={order._id}
-              className={`bg-white shadow-md rounded-xl p-6 mb-6 transition ${
+              className={`bg-white shadow-md rounded-xl p-6 mb-6 transition-all duration-300 ${
                 index === 0 ? "ring-2 ring-amber-600 shadow-lg" : ""
               }`}
             >
+              {/* Order Summary */}
               <div
-                className="flex justify-between items-center cursor-pointer"
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer"
                 onClick={() => toggleOrder(order._id)}
               >
-                <div>
+                <div className="flex-1">
                   <h2 className="text-lg font-semibold text-black">
-                    Order #{order._id}
+                    Order #{order._id.slice(-6).toUpperCase()}
                   </h2>
                   <p className="text-sm text-gray-600">
                     {order.user?.firstName} {order.user?.lastName} (
                     {order.user?.email})
                   </p>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-black font-medium">
                     Total: ₦{order.totalAmount}
                   </p>
                   <p className="text-sm text-gray-500">
@@ -135,13 +130,14 @@ const AdminOrderPage = () => {
                   <img
                     src={previewImage}
                     alt={firstProduct?.name}
-                    className="w-24 h-20 object-cover rounded-md ml-4"
+                    className="w-full sm:w-28 h-20 object-cover rounded-md"
                   />
                 )}
               </div>
 
+              {/* Expanded Order Details */}
               {isOpen && (
-                <div className="mt-6 border-t pt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <div className="mt-6 border-t pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {order.items.map((item, i) => {
                     const product = item.product;
                     const image = product?.image?.[0] || product?.image;
@@ -149,7 +145,7 @@ const AdminOrderPage = () => {
                     return (
                       <div
                         key={i}
-                        className="bg-white border rounded-lg p-4 shadow hover:shadow-md transition duration-300"
+                        className="bg-gray-100 border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
                       >
                         {image && (
                           <img
@@ -165,7 +161,7 @@ const AdminOrderPage = () => {
                           <p className="text-sm text-gray-600 line-clamp-2">
                             {product?.description}
                           </p>
-                          <div className="mt-2 text-sm text-gray-800">
+                          <div className="mt-2 text-sm text-black space-y-1">
                             <p>Price: ₦{product?.price}</p>
                             <p>Quantity: {item.qty}</p>
                           </div>

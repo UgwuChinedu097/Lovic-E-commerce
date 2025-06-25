@@ -35,18 +35,38 @@ const Spinner = () => (
   </svg>
 );
 
-// Define your Yup validation schema
+const nameRegex = /^[A-Za-z]+(?:[-'\s][A-Za-z]+)*$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 const schema = yup.object().shape({
-  firstName: yup.string().required("First Name is required"),
-  lastName: yup.string().required("Last Name is required"),
-  email: yup.string().email("Invalid email").required("Email is required"),
-  password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
+  firstName: yup
+    .string()
+    .matches(nameRegex, "First name must contain only letters")
+    .required("First Name is required"),
+  lastName: yup
+    .string()
+    .matches(nameRegex, "Last name must contain only letters")
+    .required("Last Name is required"),
+  email: yup
+    .string()
+    .email("Enter a valid email")
+    .required("Email is required"),
+  password: yup
+    .string()
+    .matches(
+      passwordRegex,
+      "Password must be at least 8 characters, include an uppercase, lowercase, and a number"
+    )
+    .required("Password is required"),
   confirmPassword: yup
     .string()
-    .oneOf([yup.ref("password"), null], "Passwords must match")
+    .oneOf([yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),
-  agreeToTerms: yup.bool().oneOf([true], "You must accept the terms and privacy policy"),
+  agreeToTerms: yup
+    .bool()
+    .oneOf([true], "You must accept the terms and privacy policy"),
 });
+
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -56,7 +76,6 @@ const SignUp = () => {
   const [signupUser] = useSignupUserMutation();
   const dispatch = useDispatch();
 
-  // useForm with yupResolver
   const {
     register,
     handleSubmit,
@@ -66,7 +85,7 @@ const SignUp = () => {
   });
 
   const onSubmit = async (data) => {
-    // data contains all form fields validated by Yup
+
     try {
       const userData = await signupUser({
         firstName: data.firstName,
@@ -81,7 +100,6 @@ const SignUp = () => {
       Nav("/signin");
     } catch (err) {
       console.error("Signup failed:", err);
-      // Optionally handle error display
     }
   };
 
@@ -205,7 +223,6 @@ const SignUp = () => {
           )}
 
           <CTAButton
-            // text={isSubmitting ? "Creating..." : "Create account"}
             text={
               isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">

@@ -32,7 +32,7 @@ const Sidebar = ({ open, onClose }) => {
   const sidebarContent = (
     <div className="flex flex-col h-full bg-black text-white p-6 w-64">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold">Admin</h2>
+        <h2 className="text-[18px] ml-3 font-bold">Lovic mega gold</h2>
         {onClose && (
           <button
             onClick={onClose}

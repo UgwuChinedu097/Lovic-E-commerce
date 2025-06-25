@@ -39,7 +39,7 @@ export default function UsersPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      {/* Header */}
+      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold text-black">All Registered Users</h1>
         <input
@@ -51,7 +51,7 @@ export default function UsersPage() {
         />
       </div>
 
-      {/* Desktop Table */}
+      
       <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
         <table className="min-w-full text-sm text-left">
           <thead className="bg-black text-white">
@@ -91,7 +91,7 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* Mobile Cards */}
+    
       <div className="md:hidden space-y-4">
         {filteredUsers.map((user) => (
           <div
